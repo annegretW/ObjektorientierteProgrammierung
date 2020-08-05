@@ -15,7 +15,7 @@ private:
     unsigned int idx_;
 
 public:
-    SparseVectorIterator(SparseVector<T, N> &v, unsigned int i)
+    SparseVectorIterator(SparseVector<T, N> &v, int i)
         : vector_(v), idx_(i) {}
 
     bool operator==(const SparseVectorIterator<T,N> &it) const

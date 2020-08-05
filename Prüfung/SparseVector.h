@@ -15,10 +15,17 @@ using namespace std;
 template <typename T, int N>
 class SparseVector
 {
+
+    //allow iterator and range classes to access private member variables
+    template <typename V, int M>
+    friend class SparseVectorIterator;
+    template <typename V, int M>
+    friend class SparseVectorRange;
+
 private:
     //map containing index and value of non-zero values of the vector
     map<int, T> data_ = {};
-    
+
 public:
     //Default Constructor
     SparseVector(){};
@@ -36,8 +43,11 @@ public:
     }
 
     //Operator returning the vector entry at index i
-    T operator[](int i)
+    T operator[](unsigned int i)
     {
+        //check if i is a valid index
+        assert(i < N);
+
         if (data_.find(i) != data_.end())
         {
             return data_[i];
@@ -49,11 +59,17 @@ public:
     }
 
     //Function to set a vector entry
-    void set(int i, T value){
-        if (value != 0){
+    void set(int i, T value)
+    {
+        //check if i is a valid index
+        assert(i < N);
+
+        if (value != 0)
+        {
             data_[i] = value;
         }
-        else {
+        else
+        {
             data_.erase(i);
         }
     }
@@ -63,6 +79,77 @@ public:
     {
         return N;
     }
+
+    //Function to return the entries of the vector as index-values-pairs
+    const map<int, T> &data() const
+    {
+        return data_;
+    }
 };
+
+template <typename T, int N>
+ostream &operator<<(ostream &os, SparseVector<T, N> v)
+{
+    os << "[ ";
+    for (auto [idx, value] : values(v))
+    {
+        os << value << " ";
+    }
+    os << "]" << std::endl;
+    return os;
+}
+
+//Skalarmultiplikation
+template <typename A, typename T, int N>
+SparseVector<T, N> &operator*(A const a, SparseVector<T, N> &v)
+{
+    for (auto [idx, value] : values(v))
+    {
+        v.set(idx, a * value);
+    }
+    return v;
+}
+
+//Skalarprodukt
+template <typename T, int N>
+T operator*(SparseVector<T, N> &v, SparseVector<T, N> &w)
+{
+    T res = 0;
+    auto it_w = w.data().begin();
+    for (auto it_v = v.data().begin(); it_v != v.data().end(); ++it_v)
+    {
+        while ((*it_w).first < (*it_v).first)
+        {
+            ++it_w;
+        }
+        if ((*it_w).first == (*it_v).first)
+        {
+            res += (*it_w).second * (*it_v).second;
+        }
+    }
+    return res;
+}
+
+//Addition
+template <typename T, int N>
+SparseVector<T, N> &operator+(SparseVector<T, N> &v, SparseVector<T, N> &w)
+{
+    for (auto it_w = w.data().begin(); it_w != w.data().end(); ++it_w)
+    {
+        v.set((*it_w).first, v[(*it_w).first] + (*it_w).second);
+    }
+    return v;
+}
+
+//Subtraktion
+template <typename T, int N>
+SparseVector<T, N> operator-(SparseVector<T, N> &v, SparseVector<T, N> &w)
+{
+    for (auto it_w = w.data().begin(); it_w != w.data().end(); ++it_w)
+    {
+        v.set((*it_w).first, v[(*it_w).first] - (*it_w).second);
+    }
+    return v;
+}
 
 #endif
